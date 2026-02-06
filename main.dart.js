@@ -61404,10 +61404,9 @@ A.Ix.prototype={
 vg(a){return this.UF(a)},
 UF(a){var s=0,r=A.O(t.H),q,p
 var $async$vg=A.P(function(b,c){if(b===1)return A.L(c,r)
-while(true)switch(s){case 0:p=B.Br.grL(window.location)
-B.b.gI(window.location.pathname.split("/"))
-q=window.open(p+"/dondonfurry/"+a,"_blank")
-A.ar7(q)
+while(true)switch(s){case 0:q=B.Br.grL(window.location)
+p=window.open(q+"/dondonfurry/"+a,"_blank")
+A.ar7(p)
 return A.M(null,r)}})
 return A.N($async$vg,r)},
 an(){var s,r,q,p=this,o=null

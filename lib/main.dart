@@ -261,7 +261,7 @@ class _PortfolioPageState extends State<PortfolioPage> with SingleTickerProvider
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'DONDON\'S PORTFOLIO 7',
+                              'DONDON\'S PORTFOLIO AAAA8',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: mainFontSize,
@@ -1064,23 +1064,18 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   // _launchImageUrl에서 웹이 아닌 경우 처리
 Future<void> _launchImageUrl(String imagePath) async {
   if (kIsWeb) {
-    // assets/ 경로를 제거하고 올바른 URL 생성
+    // Flutter 웹에서 실제 배포된 asset 경로 사용
     final cleanPath = imagePath.replaceFirst('assets/', '');
-    final baseUrl = html.window.location.origin!;
-    final basePath = html.window.location.pathname!;
+    final currentUrl = html.window.location.href;
+    final baseUrl = currentUrl.substring(0, currentUrl.indexOf('#') != -1 
+        ? currentUrl.indexOf('#') 
+        : currentUrl.length);
     
-    // GitHub Pages의 경우 base path를 고려
-    String fullUrl;
-    if (basePath.contains('/dondonfurry/')) {
-      fullUrl = '$baseUrl/dondonfurry/$cleanPath';
-    } else {
-      fullUrl = '$baseUrl/$cleanPath';
-    }
+    // 현재 페이지의 base URL에서 asset 경로 추가
+    final fullUrl = '${baseUrl}assets/$cleanPath';
     
-    print('Opening URL: $fullUrl'); // 디버깅용
+    print('Opening URL: $fullUrl');
     html.window.open(fullUrl, '_blank');
-  } else {
-    print('Image opening is only supported on web');
   }
 }
 

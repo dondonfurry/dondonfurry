@@ -61185,7 +61185,7 @@ q=0.8
 p=1.5}if(m<400){s=28
 r=18
 q=0.5
-p=1}return new A.cS(B.fm,A.ld(A.b([A.vA("DONDON'S PORTFOLIO AAAA8",A.iO(n,n,B.j,n,n,n,n,n,o,n,n,s,n,n,B.n,n,1.2,!0,n,q,n,n,n,n,n,n),B.c6),A.kh(n,s*0.14,n),A.vA("for fursuit",A.iO(n,n,B.y,n,n,n,n,n,o,n,n,r,n,n,B.ju,n,1.2,!0,n,p,n,n,n,n,n,n),B.c6)],t.E),B.a0,B.fR),n)},
+p=1}return new A.cS(B.fm,A.ld(A.b([A.vA("DONDON'S PORTFOLIO AAAA10",A.iO(n,n,B.j,n,n,n,n,n,o,n,n,s,n,n,B.n,n,1.2,!0,n,q,n,n,n,n,n,n),B.c6),A.kh(n,s*0.14,n),A.vA("for fursuit",A.iO(n,n,B.y,n,n,n,n,n,o,n,n,r,n,n,B.ju,n,1.2,!0,n,p,n,n,n,n,n,n),B.c6)],t.E),B.a0,B.fR),n)},
 $S:379}
 A.a0O.prototype={
 gnM(){return A.bI([B.cR,B.bz,B.e6,B.b3],t.R)},

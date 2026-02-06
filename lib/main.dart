@@ -261,7 +261,7 @@ class _PortfolioPageState extends State<PortfolioPage> with SingleTickerProvider
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'DONDON\'S PORTFOLIO AAAA10',
+                              'DONDON\'S PORTFOLIO AAAA12',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: mainFontSize,
@@ -1064,27 +1064,11 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   // _launchImageUrl에서 웹이 아닌 경우 처리
 Future<void> _launchImageUrl(String imagePath) async {
   if (kIsWeb) {
-    // assets/ 제거
+    // assets/ 제거 (빌드 시 이미 assets/ 폴더에 들어가므로)
     final cleanPath = imagePath.replaceFirst('assets/', '');
     
-    // 현재 URL 가져오기
-    final currentUrl = html.window.location.href;
-    
-    // # 제거 (SPA 라우팅)
-    final baseUrl = currentUrl.contains('#') 
-        ? currentUrl.substring(0, currentUrl.indexOf('#'))
-        : currentUrl;
-    
-    // 마지막 / 제거 (있을 경우)
-    final cleanBaseUrl = baseUrl.endsWith('/') 
-        ? baseUrl.substring(0, baseUrl.length - 1) 
-        : baseUrl;
-    
-    // 최종 URL: baseUrl + assets/ + cleanPath
-    final fullUrl = '$cleanBaseUrl/assets/$cleanPath';
-    
-    print('Opening URL: $fullUrl');
-    html.window.open(fullUrl, '_blank');
+    // 상대 경로로 열기
+    html.window.open('assets/$cleanPath', '_blank');
   }
 }
 

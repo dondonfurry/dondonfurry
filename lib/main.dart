@@ -261,7 +261,7 @@ class _PortfolioPageState extends State<PortfolioPage> with SingleTickerProvider
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'DONDON\'S PORTFOLIO AAAA12',
+                              'DONDON\'S PORTFOLIO AAAA13',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: mainFontSize,
@@ -1061,14 +1061,15 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   bool _isSliding = false;
   bool _slideRight = true;
 
-  // _launchImageUrl에서 웹이 아닌 경우 처리
 Future<void> _launchImageUrl(String imagePath) async {
   if (kIsWeb) {
-    // assets/ 제거 (빌드 시 이미 assets/ 폴더에 들어가므로)
-    final cleanPath = imagePath.replaceFirst('assets/', '');
+    // assets/ 그대로 유지 (assets/assets/로 만들기 위해)
+    final imageUrl = 'assets/$imagePath';
     
-    // 상대 경로로 열기
-    html.window.open('assets/$cleanPath', '_blank');
+    print('Opening URL: $imageUrl');
+    html.window.open(imageUrl, '_blank');
+  } else {
+    print('Image opening is only supported on web');
   }
 }
 

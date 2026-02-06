@@ -1062,18 +1062,19 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   bool _slideRight = true;
 
   Future<void> _launchImageUrl(String imagePath) async {
-    if (kIsWeb) {
-      // Web 환경: 직접 window.open 사용
-      html.window.open('/$imagePath', '_blank');
-    } else {
-      // 앱 환경: url_launcher 사용
-      final Uri url = Uri.parse(imagePath);
-      if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-        print('Could not launch $imagePath');
-      }
+  if (kIsWeb) {
+    // base-href를 포함한 절대 경로 생성
+    final baseUrl = html.window.location.origin!;
+    final basePath = html.window.location.pathname!.split('/').first;
+    final fullUrl = '$baseUrl/dondonfurry/$imagePath';
+    html.window.open(fullUrl, '_blank');
+  } else {
+    final Uri url = Uri.parse(imagePath);
+    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
+      print('Could not launch $imagePath');
     }
   }
-
+}
   @override
   void initState() {
     super.initState();

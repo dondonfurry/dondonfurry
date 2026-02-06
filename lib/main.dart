@@ -261,7 +261,7 @@ class _PortfolioPageState extends State<PortfolioPage> with SingleTickerProvider
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              'DONDON\'S PORTFOLIO AAAA8',
+                              'DONDON\'S PORTFOLIO AAAA10',
                               textAlign: TextAlign.center,
                               style: TextStyle(
                                 fontSize: mainFontSize,

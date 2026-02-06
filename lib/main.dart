@@ -1061,18 +1061,15 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   bool _isSliding = false;
   bool _slideRight = true;
 
-  Future<void> _launchImageUrl(String imagePath) async {
+  // _launchImageUrl에서 웹이 아닌 경우 처리
+Future<void> _launchImageUrl(String imagePath) async {
   if (kIsWeb) {
-    // base-href를 포함한 절대 경로 생성
     final baseUrl = html.window.location.origin!;
-    final basePath = html.window.location.pathname!.split('/').first;
     final fullUrl = '$baseUrl/dondonfurry/$imagePath';
     html.window.open(fullUrl, '_blank');
   } else {
-    final Uri url = Uri.parse(imagePath);
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      print('Could not launch $imagePath');
-    }
+    // 모바일/데스크톱에서는 로컬 파일 경로를 URL로 변환할 수 없음
+    print('Image opening is only supported on web');
   }
 }
   @override

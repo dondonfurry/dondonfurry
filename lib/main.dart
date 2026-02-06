@@ -1064,20 +1064,26 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   // _launchImageUrl에서 웹이 아닌 경우 처리
 Future<void> _launchImageUrl(String imagePath) async {
   if (kIsWeb) {
-    // Flutter 웹에서 실제 배포된 asset 경로 사용
+    // assets/ 경로를 제거하고 올바른 URL 생성
     final cleanPath = imagePath.replaceFirst('assets/', '');
-    final currentUrl = html.window.location.href;
-    final baseUrl = currentUrl.substring(0, currentUrl.indexOf('#') != -1 
-        ? currentUrl.indexOf('#') 
-        : currentUrl.length);
+    final baseUrl = html.window.location.origin!;
+    final basePath = html.window.location.pathname!;
     
-    // 현재 페이지의 base URL에서 asset 경로 추가
-    final fullUrl = '${baseUrl}assets/$cleanPath';
+    // GitHub Pages의 경우 base path를 고려
+    String fullUrl;
+    if (basePath.contains('/dondonfurry/')) {
+      fullUrl = '$baseUrl/dondonfurry/$cleanPath';
+    } else {
+      fullUrl = '$baseUrl/$cleanPath';
+    }
     
-    print('Opening URL: $fullUrl');
+    print('Opening URL: $fullUrl'); // 디버깅용
     html.window.open(fullUrl, '_blank');
+  } else {
+    print('Image opening is only supported on web');
   }
 }
+
   @override
   void initState() {
     super.initState();

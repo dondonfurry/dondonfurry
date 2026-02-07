@@ -728,8 +728,11 @@ class _WorkImageItemState extends State<WorkImageItem> with AutomaticKeepAliveCl
                     gaplessPlayback: true, // 부드러운 전환
                   ),
                   // 검정 오버레이 + 이름
-                  if (_isHovered)
-                    Positioned.fill(
+                  Positioned.fill(
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 200),
+                      opacity: _isHovered ? 1.0 : 0.0,
+                      curve: Curves.easeInOut,
                       child: Container(
                         color: Colors.black.withOpacity(0.3),
                         child: Center(
@@ -745,6 +748,7 @@ class _WorkImageItemState extends State<WorkImageItem> with AutomaticKeepAliveCl
                         ),
                       ),
                     ),
+                  ),
                 ],
               );
             },
@@ -1061,9 +1065,12 @@ class ImageViewerOverlay extends StatefulWidget {
 
 class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
+  late AnimationController _slideController;
+  late Animation<Offset> _slideOutAnimation;
+  late Animation<Offset> _slideInAnimation;
   int _displayIndex = 0;
+  bool _isSliding = false;
+  bool _slideRight = true;
 
   Future<void> _launchImageUrl(String imagePath) async {
     if (kIsWeb) {
@@ -1080,37 +1087,95 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     super.initState();
     _displayIndex = widget.currentIndex;
     
-    _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 200),
+    _slideController = AnimationController(
+      duration: const Duration(milliseconds: 400),
       vsync: this,
     );
     
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
+    _slideOutAnimation = Tween<Offset>(
+      begin: Offset.zero,
+      end: const Offset(-1, 0),
     ).animate(CurvedAnimation(
-      parent: _fadeController,
-      curve: Curves.easeOut,
+      parent: _slideController,
+      curve: Curves.easeInOut,
     ));
     
-    _fadeController.forward();
+    _slideInAnimation = Tween<Offset>(
+      begin: const Offset(1, 0),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _slideController,
+      curve: Curves.easeInOut,
+    ));
   }
 
   @override
   void didUpdateWidget(ImageViewerOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      _fadeController.reset();
+      // 방향 결정
+      _slideRight = widget.currentIndex < oldWidget.currentIndex ||
+          (widget.currentIndex == 0 && oldWidget.currentIndex == widget.totalCount - 1);
+      _updateAnimationDirection();
+      _slideImage();
+    }
+  }
+
+  void _updateAnimationDirection() {
+    if (_slideRight) {
+      // 오른쪽으로 슬라이드 (이전 이미지)
+      _slideOutAnimation = Tween<Offset>(
+        begin: Offset.zero,
+        end: const Offset(1, 0),
+      ).animate(CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeInOut,
+      ));
+      
+      _slideInAnimation = Tween<Offset>(
+        begin: const Offset(-1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeInOut,
+      ));
+    } else {
+      // 왼쪽으로 슬라이드 (다음 이미지)
+      _slideOutAnimation = Tween<Offset>(
+        begin: Offset.zero,
+        end: const Offset(-1, 0),
+      ).animate(CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeInOut,
+      ));
+      
+      _slideInAnimation = Tween<Offset>(
+        begin: const Offset(1, 0),
+        end: Offset.zero,
+      ).animate(CurvedAnimation(
+        parent: _slideController,
+        curve: Curves.easeInOut,
+      ));
+    }
+  }
+
+  void _slideImage() {
+    if (_isSliding) return;
+    
+    setState(() => _isSliding = true);
+    
+    _slideController.forward(from: 0).then((_) {
       setState(() {
         _displayIndex = widget.currentIndex;
       });
-      _fadeController.forward();
-    }
+      _slideController.reset();
+      setState(() => _isSliding = false);
+    });
   }
 
   @override
   void dispose() {
-    _fadeController.dispose();
+    _slideController.dispose();
     super.dispose();
   }
 
@@ -1136,7 +1201,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    final imagePath = _getImagePath(_displayIndex);
+                    final imagePath = _getImagePath(widget.currentIndex);
                     _launchImageUrl(imagePath);
                   },
                   child: Container(
@@ -1144,14 +1209,39 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                       maxWidth: MediaQuery.of(context).size.width * 0.85,
                       maxHeight: MediaQuery.of(context).size.height * 0.85,
                     ),
-                    child: FadeTransition(
-                      opacity: _fadeAnimation,
-                      child: Image.asset(
-                        _getImagePath(_displayIndex),
-                        fit: BoxFit.contain,
-                        cacheWidth: 1920,
-                        gaplessPlayback: true,
-                      ),
+                    child: Stack(
+                      children: [
+                        // 나가는 이미지
+                        if (_isSliding)
+                          SlideTransition(
+                            position: _slideOutAnimation,
+                            child: Image.asset(
+                              _getImagePath(_displayIndex),
+                              fit: BoxFit.contain,
+                              cacheWidth: 1920,
+                              gaplessPlayback: true,
+                            ),
+                          ),
+                        // 들어오는 이미지
+                        if (_isSliding)
+                          SlideTransition(
+                            position: _slideInAnimation,
+                            child: Image.asset(
+                              _getImagePath(widget.currentIndex),
+                              fit: BoxFit.contain,
+                              cacheWidth: 1920,
+                              gaplessPlayback: true,
+                            ),
+                          ),
+                        // 정지 상태 이미지
+                        if (!_isSliding)
+                          Image.asset(
+                            _getImagePath(_displayIndex),
+                            fit: BoxFit.contain,
+                            cacheWidth: 1920,
+                            gaplessPlayback: true,
+                          ),
+                      ],
                     ),
                   ),
                 ),

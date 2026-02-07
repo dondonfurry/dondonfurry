@@ -704,38 +704,44 @@ class _WorkImageItemState extends State<WorkImageItem> {
         onTap: widget.onTap,
         child: ClipRRect(
           borderRadius: BorderRadius.circular(0),
-          child: Stack(
-            children: [
-              // 이미지 - 캐시 설정 제거, 원본 비율 유지
-              Image.asset(
-                widget.imagePath,
-                fit: BoxFit.cover,
-                filterQuality: FilterQuality.medium, // ← 메모리 사용량 감소
-                // cacheWidth, cacheHeight 제거!
-              ),
-              // 검정 오버레이 + 이름
-              Positioned.fill(
-                child: AnimatedOpacity(
-                  duration: const Duration(milliseconds: 100),
-                  opacity: _isHovered ? 1.0 : 0.0,
-                  curve: Curves.easeInOut,
-                  child: Container(
-                    color: Colors.black.withOpacity(0.3),
-                    child: Center(
-                      child: Text(
-                        widget.imageName,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w500,
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // 실제 표시 크기의 2배만 캐싱 (레티나 대응)
+              final cacheSize = (constraints.maxWidth * 2).toInt();
+              
+              return Stack(
+                children: [
+                  // 이미지
+                  Image.asset(
+                    widget.imagePath,
+                    fit: BoxFit.cover,
+                    cacheWidth: cacheSize > 0 ? cacheSize : null,  // ← 동적 캐싱
+                  ),
+                  // 검정 오버레이 + 이름
+                  Positioned.fill(
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 100),
+                      opacity: _isHovered ? 1.0 : 0.0,
+                      curve: Curves.easeInOut,
+                      child: Container(
+                        color: Colors.black.withOpacity(0.3),
+                        child: Center(
+                          child: Text(
+                            widget.imageName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
                         ),
-                        textAlign: TextAlign.center,
                       ),
                     ),
                   ),
-                ),
-              ),
-            ],
+                ],
+              );
+            },
           ),
         ),
       ),
@@ -1203,13 +1209,17 @@ Widget build(BuildContext context) {
                   child: AnimatedBuilder(
                     animation: _slideController,
                     builder: (context, child) {
+                      // 뷰어는 화면 크기 기준으로 캐싱
+                      final screenWidth = MediaQuery.of(context).size.width;
+                      final cacheSize = (screenWidth * 2).toInt();  // 레티나 대응
+                      
                       if (_slideController.value < 0.5) {
                         return SlideTransition(
                           position: _slideOutAnimation,
                           child: Image.asset(
                             _getImagePath(_displayIndex),
                             fit: BoxFit.contain,
-                            cacheWidth: 2400,  // ← 뷰어는 큰 해상도, height는 자동
+                            cacheWidth: cacheSize,  // ← 화면 크기 기준
                           ),
                         );
                       } else {
@@ -1218,7 +1228,7 @@ Widget build(BuildContext context) {
                           child: Image.asset(
                             _getImagePath(widget.currentIndex),
                             fit: BoxFit.contain,
-                            cacheWidth: 2400,  // ← 뷰어는 큰 해상도, height는 자동
+                            cacheWidth: cacheSize,  // ← 화면 크기 기준
                           ),
                         );
                       }

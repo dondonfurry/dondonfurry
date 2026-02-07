@@ -68,9 +68,9 @@ const RESOURCES = {"flutter.js": "24bc71911b75b5f8135c949e27a2984e",
 "apple-touch-icon.png": "64c10317649cd9ef6bd43cd0215dcdcd",
 "favicon.ico": "3ec8d1d37d9993a674215beaf79e821c",
 "og-image.png": "5c8c87685a44cf84d98fcb5a2c5b5e1b",
-"flutter_bootstrap.js": "371977957abc02cb84756f1426902a87",
+"flutter_bootstrap.js": "1a039870df5a935eaf24e93cecd788c7",
 "version.json": "490e3e85e938a7e9048321d7aeab37f8",
-"main.dart.js": "f0ca9c026f98c1457352d4e1dbd099b3"};
+"main.dart.js": "c533b5a7d77f018aeb396897553f22a3"};
 // The application shell files that are downloaded before a service worker can
 // start.
 const CORE = ["main.dart.js",

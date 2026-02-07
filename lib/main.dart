@@ -1087,24 +1087,26 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     _displayIndex = widget.currentIndex;
     
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 600),
+      duration: const Duration(milliseconds: 500),
       vsync: this,
     );
     
+    // 나가는 애니메이션: 빠르게 시작 -> 일정 속도 유지 -> 화살표 근처에서 잘림
     _slideOutAnimation = Tween<Offset>(
       begin: Offset.zero,
-      end: const Offset(-2.0, 0),
+      end: const Offset(-1.2, 0), // 화면 끝까지 가지 않고 1.2배만 이동
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
+      curve: Curves.easeIn, // 점점 빨라지면서 나감
     ));
     
+    // 들어오는 애니메이션: 빠르게 들어와서 -> 중앙에서 부드럽게 감속
     _slideInAnimation = Tween<Offset>(
-      begin: const Offset(2.0, 0),
+      begin: const Offset(1.2, 0), // 반대편에서 시작
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
+      curve: Curves.easeOut, // 점점 느려지면서 정착
     ));
     
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -1146,36 +1148,38 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
 
   void _updateAnimationDirection() {
     if (_slideRight) {
+      // 오른쪽 화살표: 현재 사진은 왼쪽으로, 새 사진은 오른쪽에서
       _slideOutAnimation = Tween<Offset>(
         begin: Offset.zero,
-        end: const Offset(-2.0, 0),
+        end: const Offset(-1.2, 0),
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
+        curve: Curves.easeIn,
       ));
       
       _slideInAnimation = Tween<Offset>(
-        begin: const Offset(2.0, 0),
+        begin: const Offset(1.2, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
+        curve: Curves.easeOut,
       ));
     } else {
+      // 왼쪽 화살표: 현재 사진은 오른쪽으로, 새 사진은 왼쪽에서
       _slideOutAnimation = Tween<Offset>(
         begin: Offset.zero,
-        end: const Offset(2.0, 0),
+        end: const Offset(1.2, 0),
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
+        curve: Curves.easeIn,
       ));
       
       _slideInAnimation = Tween<Offset>(
-        begin: const Offset(-2.0, 0),
+        begin: const Offset(-1.2, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
+        curve: Curves.easeOut,
       ));
     }
   }
@@ -1188,13 +1192,9 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     _slideController.forward(from: 0).then((_) {
       setState(() {
         _displayIndex = widget.currentIndex;
+        _isSliding = false;
       });
       _slideController.reset();
-      Future.delayed(const Duration(milliseconds: 50), () {
-        if (mounted) {
-          setState(() => _isSliding = false);
-        }
-      });
     });
   }
 
@@ -1222,37 +1222,17 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
           color: Colors.black.withOpacity(0.9),
           child: Stack(
             children: [
-              // 이미지 영역 - ClipRect 제거하고 Stack으로 오버플로우 허용
+              // 이미지 영역 - 화살표 근처에서 자연스럽게 클리핑
               Positioned.fill(
-                child: Stack(
-                  clipBehavior: Clip.none, // 클리핑 비활성화
-                  alignment: Alignment.center,
-                  children: [
-                    // 정지 상태 이미지
-                    if (!_isSliding)
-                      GestureDetector(
-                        onTap: () {
-                          final imagePath = _getImagePath(_displayIndex);
-                          _launchImageUrl(imagePath);
-                        },
-                        child: ConstrainedBox(
-                          constraints: BoxConstraints(
-                            maxWidth: MediaQuery.of(context).size.width * 0.85,
-                            maxHeight: MediaQuery.of(context).size.height * 0.85,
-                          ),
-                          child: Image.asset(
-                            _getImagePath(_displayIndex),
-                            fit: BoxFit.contain,
-                            cacheWidth: 1920,
-                            gaplessPlayback: true,
-                          ),
-                        ),
-                      ),
-                    // 나가는 이미지 (애니메이션 중)
-                    if (_isSliding)
-                      SlideTransition(
-                        position: _slideOutAnimation,
-                        child: GestureDetector(
+                left: 100, // 왼쪽 화살표 공간
+                right: 100, // 오른쪽 화살표 공간
+                child: ClipRect( // 클리핑 활성화하여 화살표 근처에서 잘림
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      // 정지 상태 이미지
+                      if (!_isSliding)
+                        GestureDetector(
                           onTap: () {
                             final imagePath = _getImagePath(_displayIndex);
                             _launchImageUrl(imagePath);
@@ -1270,31 +1250,54 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                             ),
                           ),
                         ),
-                      ),
-                    // 들어오는 이미지 (애니메이션 중)
-                    if (_isSliding)
-                      SlideTransition(
-                        position: _slideInAnimation,
-                        child: GestureDetector(
-                          onTap: () {
-                            final imagePath = _getImagePath(widget.currentIndex);
-                            _launchImageUrl(imagePath);
-                          },
-                          child: ConstrainedBox(
-                            constraints: BoxConstraints(
-                              maxWidth: MediaQuery.of(context).size.width * 0.85,
-                              maxHeight: MediaQuery.of(context).size.height * 0.85,
-                            ),
-                            child: Image.asset(
-                              _getImagePath(widget.currentIndex),
-                              fit: BoxFit.contain,
-                              cacheWidth: 1920,
-                              gaplessPlayback: true,
+                      // 나가는 이미지 (애니메이션 중)
+                      if (_isSliding)
+                        SlideTransition(
+                          position: _slideOutAnimation,
+                          child: GestureDetector(
+                            onTap: () {
+                              final imagePath = _getImagePath(_displayIndex);
+                              _launchImageUrl(imagePath);
+                            },
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * 0.85,
+                                maxHeight: MediaQuery.of(context).size.height * 0.85,
+                              ),
+                              child: Image.asset(
+                                _getImagePath(_displayIndex),
+                                fit: BoxFit.contain,
+                                cacheWidth: 1920,
+                                gaplessPlayback: true,
+                              ),
                             ),
                           ),
                         ),
-                      ),
-                  ],
+                      // 들어오는 이미지 (애니메이션 중)
+                      if (_isSliding)
+                        SlideTransition(
+                          position: _slideInAnimation,
+                          child: GestureDetector(
+                            onTap: () {
+                              final imagePath = _getImagePath(widget.currentIndex);
+                              _launchImageUrl(imagePath);
+                            },
+                            child: ConstrainedBox(
+                              constraints: BoxConstraints(
+                                maxWidth: MediaQuery.of(context).size.width * 0.85,
+                                maxHeight: MediaQuery.of(context).size.height * 0.85,
+                              ),
+                              child: Image.asset(
+                                _getImagePath(widget.currentIndex),
+                                fit: BoxFit.contain,
+                                cacheWidth: 1920,
+                                gaplessPlayback: true,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
               

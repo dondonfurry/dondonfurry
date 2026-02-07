@@ -552,8 +552,7 @@ class _HoverImageState extends State<HoverImage> {
                 Image.asset(
                   'assets/res/beforeAfter/${widget.index + 1}.webp',
                   fit: BoxFit.cover,
-                  cacheWidth: 600,  // ← 추가
-                  cacheHeight: 800,  // ← 추가
+                  cacheWidth: 800,  // ← width만 설정
                 ),
                 // After 이미지
                 AnimatedOpacity(
@@ -563,8 +562,7 @@ class _HoverImageState extends State<HoverImage> {
                   child: Image.asset(
                     'assets/res/beforeAfter/${widget.index + 4}.webp',
                     fit: BoxFit.cover,
-                    cacheWidth: 600,  // ← 추가
-                    cacheHeight: 800,  // ← 추가
+                    cacheWidth: 800,  // ← width만 설정
                   ),
                 ),
               ],
@@ -710,12 +708,11 @@ class _WorkImageItemState extends State<WorkImageItem> {
           borderRadius: BorderRadius.circular(0),
           child: Stack(
             children: [
-              // 이미지 - 캐시 크기 제한 추가
+              // 이미지 - cacheWidth만 설정 (비율 유지)
               Image.asset(
                 widget.imagePath,
                 fit: BoxFit.cover,
-                cacheWidth: 600,  // ← 메모리 사용량 감소
-                cacheHeight: 800,  // ← 적절한 크기로 캐싱
+                cacheWidth: 800,  // ← width만 설정, height는 자동으로 비율 유지
               ),
               // 검정 오버레이 + 이름
               Positioned.fill(
@@ -1213,7 +1210,7 @@ Widget build(BuildContext context) {
                           child: Image.asset(
                             _getImagePath(_displayIndex),
                             fit: BoxFit.contain,
-                            cacheWidth: 1920,  // ← 추가 (뷰어는 좀 더 큰 해상도)
+                            cacheWidth: 2400,  // ← 뷰어는 큰 해상도, height는 자동
                           ),
                         );
                       } else {
@@ -1222,7 +1219,7 @@ Widget build(BuildContext context) {
                           child: Image.asset(
                             _getImagePath(widget.currentIndex),
                             fit: BoxFit.contain,
-                            cacheWidth: 1920,  // ← 추가
+                            cacheWidth: 2400,  // ← 뷰어는 큰 해상도, height는 자동
                           ),
                         );
                       }

@@ -547,21 +547,25 @@ class _HoverImageState extends State<HoverImage> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // 기본 이미지 - 작게 캐싱
+                // 기본 이미지
                 Image.asset(
                   'assets/res/beforeAfter/${widget.index + 1}.webp',
                   fit: BoxFit.cover,
-                  cacheWidth: (widget.width * 1.5).toInt(), // 1.5배로 줄임
+                  cacheWidth: (widget.width * 1.5).toInt(),
                   gaplessPlayback: true,
                 ),
-                // 호버 이미지 - 필요할 때만 로드
-                if (_isHovered)
-                  Image.asset(
+                // 호버 이미지 - 항상 로드하되 불투명도로 제어
+                AnimatedOpacity(
+                  duration: const Duration(milliseconds: 500),
+                  opacity: _isHovered ? 1.0 : 0.0,
+                  curve: Curves.easeInOut,
+                  child: Image.asset(
                     'assets/res/beforeAfter/${widget.index + 4}.webp',
                     fit: BoxFit.cover,
                     cacheWidth: (widget.width * 1.5).toInt(),
                     gaplessPlayback: true,
                   ),
+                ),
               ],
             ),
           ),
@@ -1059,8 +1063,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
-  String? _currentImagePath;
-  String? _nextImagePath;
+  int _displayIndex = 0;
 
   Future<void> _launchImageUrl(String imagePath) async {
     if (kIsWeb) {
@@ -1075,33 +1078,33 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   @override
   void initState() {
     super.initState();
-    _currentImagePath = _getImagePath(widget.currentIndex);
+    _displayIndex = widget.currentIndex;
     
     _fadeController = AnimationController(
-      duration: const Duration(milliseconds: 300),
+      duration: const Duration(milliseconds: 200),
       vsync: this,
     );
     
     _fadeAnimation = Tween<double>(
-      begin: 1.0,
-      end: 0.0,
+      begin: 0.0,
+      end: 1.0,
     ).animate(CurvedAnimation(
       parent: _fadeController,
-      curve: Curves.easeInOut,
+      curve: Curves.easeOut,
     ));
+    
+    _fadeController.forward();
   }
 
   @override
   void didUpdateWidget(ImageViewerOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      _nextImagePath = _getImagePath(widget.currentIndex);
-      _fadeController.forward().then((_) {
-        setState(() {
-          _currentImagePath = _nextImagePath;
-        });
-        _fadeController.reverse();
+      _fadeController.reset();
+      setState(() {
+        _displayIndex = widget.currentIndex;
       });
+      _fadeController.forward();
     }
   }
 
@@ -1133,9 +1136,8 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    if (_currentImagePath != null) {
-                      _launchImageUrl(_currentImagePath!);
-                    }
+                    final imagePath = _getImagePath(_displayIndex);
+                    _launchImageUrl(imagePath);
                   },
                   child: Container(
                     constraints: BoxConstraints(
@@ -1144,14 +1146,12 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                     ),
                     child: FadeTransition(
                       opacity: _fadeAnimation,
-                      child: _currentImagePath != null
-                          ? Image.asset(
-                              _currentImagePath!,
-                              fit: BoxFit.contain,
-                              cacheWidth: 1920, // 고정 크기로 캐싱
-                              gaplessPlayback: true,
-                            )
-                          : const SizedBox(),
+                      child: Image.asset(
+                        _getImagePath(_displayIndex),
+                        fit: BoxFit.contain,
+                        cacheWidth: 1920,
+                        gaplessPlayback: true,
+                      ),
                     ),
                   ),
                 ),

@@ -1,11 +1,11 @@
 {
-    "name": "DonDon's Portfolio - Fursuit Photography",
+    "name": "DonDon's Portfolio",
     "short_name": "DonDon",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FFFFFF",
     "theme_color": "#333333",
-    "description": "DonDon's Fursuit Photography Portfolio",
+    "description": "DonDon's Fursuit Portfolio",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

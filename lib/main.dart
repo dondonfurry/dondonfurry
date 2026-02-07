@@ -548,13 +548,11 @@ class _HoverImageState extends State<HoverImage> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Before 이미지
                 Image.asset(
                   'assets/res/beforeAfter/${widget.index + 1}.webp',
                   fit: BoxFit.cover,
-                  cacheWidth: 800,  // ← width만 설정
+                  // 캐시 설정 제거
                 ),
-                // After 이미지
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 500),
                   opacity: _isHovered ? 1.0 : 0.0,
@@ -562,7 +560,7 @@ class _HoverImageState extends State<HoverImage> {
                   child: Image.asset(
                     'assets/res/beforeAfter/${widget.index + 4}.webp',
                     fit: BoxFit.cover,
-                    cacheWidth: 800,  // ← width만 설정
+                    // 캐시 설정 제거
                   ),
                 ),
               ],
@@ -708,11 +706,12 @@ class _WorkImageItemState extends State<WorkImageItem> {
           borderRadius: BorderRadius.circular(0),
           child: Stack(
             children: [
-              // 이미지 - cacheWidth만 설정 (비율 유지)
+              // 이미지 - 캐시 설정 제거, 원본 비율 유지
               Image.asset(
                 widget.imagePath,
                 fit: BoxFit.cover,
-                cacheWidth: 800,  // ← width만 설정, height는 자동으로 비율 유지
+                filterQuality: FilterQuality.medium, // ← 메모리 사용량 감소
+                // cacheWidth, cacheHeight 제거!
               ),
               // 검정 오버레이 + 이름
               Positioned.fill(

@@ -548,12 +548,14 @@ class _HoverImageState extends State<HoverImage> {
             child: Stack(
               fit: StackFit.expand,
               children: [
-                // Before 이미지 
+                // Before 이미지
                 Image.asset(
                   'assets/res/beforeAfter/${widget.index + 1}.webp',
                   fit: BoxFit.cover,
+                  cacheWidth: 600,  // ← 추가
+                  cacheHeight: 800,  // ← 추가
                 ),
-                // After 이미지 
+                // After 이미지
                 AnimatedOpacity(
                   duration: const Duration(milliseconds: 500),
                   opacity: _isHovered ? 1.0 : 0.0,
@@ -561,6 +563,8 @@ class _HoverImageState extends State<HoverImage> {
                   child: Image.asset(
                     'assets/res/beforeAfter/${widget.index + 4}.webp',
                     fit: BoxFit.cover,
+                    cacheWidth: 600,  // ← 추가
+                    cacheHeight: 800,  // ← 추가
                   ),
                 ),
               ],
@@ -650,6 +654,7 @@ class _SectionWorkState extends State<SectionWork> {
                   crossAxisSpacing: 16,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
+                  addAutomaticKeepAlives: false,  // ← 추가: 화면 밖 위젯 메모리 해제
                   itemCount: _imageCount,
                   itemBuilder: (context, index) {
                     final imageName = _imageNames['${index + 1}.webp'] ?? 'Work ${index + 1}';
@@ -705,10 +710,12 @@ class _WorkImageItemState extends State<WorkImageItem> {
           borderRadius: BorderRadius.circular(0),
           child: Stack(
             children: [
-              // 이미지
+              // 이미지 - 캐시 크기 제한 추가
               Image.asset(
                 widget.imagePath,
                 fit: BoxFit.cover,
+                cacheWidth: 600,  // ← 메모리 사용량 감소
+                cacheHeight: 800,  // ← 적절한 크기로 캐싱
               ),
               // 검정 오버레이 + 이름
               Positioned.fill(
@@ -1176,52 +1183,55 @@ Future<void> _launchImageUrl(String imagePath) async {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: GestureDetector(
-        onTap: widget.onClose,
-        child: Container(
-          color: Colors.black.withOpacity(0.9),
-          child: Stack(
-            children: [
-              // 이미지 영역
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    final imagePath = _getImagePath(widget.currentIndex);
-                    _launchImageUrl(imagePath);
-                  },
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.85,
-                      maxHeight: MediaQuery.of(context).size.height * 0.85,
-                    ),
-                    child: AnimatedBuilder(
-                      animation: _slideController,
-                      builder: (context, child) {
-                        if (_slideController.value < 0.5) {
-                          return SlideTransition(
-                            position: _slideOutAnimation,
-                            child: Image.asset(
-                              _getImagePath(_displayIndex),
-                              fit: BoxFit.contain,
-                            ),
-                          );
-                        } else {
-                          return SlideTransition(
-                            position: _slideInAnimation,
-                            child: Image.asset(
-                              _getImagePath(widget.currentIndex),
-                              fit: BoxFit.contain,
-                            ),
-                          );
-                        }
-                      },
-                    ),
+Widget build(BuildContext context) {
+  return Material(
+    color: Colors.transparent,
+    child: GestureDetector(
+      onTap: widget.onClose,
+      child: Container(
+        color: Colors.black.withOpacity(0.9),
+        child: Stack(
+          children: [
+            // 이미지 영역
+            Center(
+              child: GestureDetector(
+                onTap: () {
+                  final imagePath = _getImagePath(widget.currentIndex);
+                  _launchImageUrl(imagePath);
+                },
+                child: Container(
+                  constraints: BoxConstraints(
+                    maxWidth: MediaQuery.of(context).size.width * 0.85,
+                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                  ),
+                  child: AnimatedBuilder(
+                    animation: _slideController,
+                    builder: (context, child) {
+                      if (_slideController.value < 0.5) {
+                        return SlideTransition(
+                          position: _slideOutAnimation,
+                          child: Image.asset(
+                            _getImagePath(_displayIndex),
+                            fit: BoxFit.contain,
+                            cacheWidth: 1920,  // ← 추가 (뷰어는 좀 더 큰 해상도)
+                          ),
+                        );
+                      } else {
+                        return SlideTransition(
+                          position: _slideInAnimation,
+                          child: Image.asset(
+                            _getImagePath(widget.currentIndex),
+                            fit: BoxFit.contain,
+                            cacheWidth: 1920,  // ← 추가
+                          ),
+                        );
+                      }
+                    },
                   ),
                 ),
               ),
+            ),
+            // ... 나머지 코드
               
               // 왼쪽 화살표
               Positioned(

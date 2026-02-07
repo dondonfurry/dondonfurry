@@ -222,7 +222,6 @@ class _PortfolioPageState extends State<PortfolioPage> with SingleTickerProvider
                 child: Center(
                   child: LayoutBuilder(
                     builder: (context, constraints) {
-                      // 화면 너비에 따라 글자 크기 조정
                       final width = constraints.maxWidth;
                       
                       double mainFontSize = 84;
@@ -510,7 +509,7 @@ class SectionMain extends StatelessWidget {
   }
 }
 
-/* ---------------- HOVER IMAGE ---------------- */
+/* ---------------- HOVER IMAGE (메모리 최적화) ---------------- */
 
 class HoverImage extends StatefulWidget {
   final int index;
@@ -548,21 +547,21 @@ class _HoverImageState extends State<HoverImage> {
             child: Stack(
               fit: StackFit.expand,
               children: [
+                // 기본 이미지 - 작게 캐싱
                 Image.asset(
                   'assets/res/beforeAfter/${widget.index + 1}.webp',
                   fit: BoxFit.cover,
-                  // 캐시 설정 제거
+                  cacheWidth: (widget.width * 1.5).toInt(), // 1.5배로 줄임
+                  gaplessPlayback: true,
                 ),
-                AnimatedOpacity(
-                  duration: const Duration(milliseconds: 500),
-                  opacity: _isHovered ? 1.0 : 0.0,
-                  curve: Curves.easeInOut,
-                  child: Image.asset(
+                // 호버 이미지 - 필요할 때만 로드
+                if (_isHovered)
+                  Image.asset(
                     'assets/res/beforeAfter/${widget.index + 4}.webp',
                     fit: BoxFit.cover,
-                    // 캐시 설정 제거
+                    cacheWidth: (widget.width * 1.5).toInt(),
+                    gaplessPlayback: true,
                   ),
-                ),
               ],
             ),
           ),
@@ -572,7 +571,7 @@ class _HoverImageState extends State<HoverImage> {
   }
 }
 
-/* ---------------- WORK ---------------- */
+/* ---------------- WORK (메모리 최적화) ---------------- */
 
 class SectionWork extends StatefulWidget {
   final Function(int, bool) onImageTap;
@@ -591,7 +590,7 @@ class SectionWork extends StatefulWidget {
 class _SectionWorkState extends State<SectionWork> {
   Map<String, String> _imageNames = {};
   bool _isLoading = true;
-  int _imageCount = 50; // work 폴더의 이미지 개수 (필요에 따라 조정)
+  int _imageCount = 20;
 
   @override
   void initState() {
@@ -650,7 +649,8 @@ class _SectionWorkState extends State<SectionWork> {
                   crossAxisSpacing: 16,
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
-                  addAutomaticKeepAlives: false,  // ← 추가: 화면 밖 위젯 메모리 해제
+                  addAutomaticKeepAlives: false,
+                  addRepaintBoundaries: true, // 추가: 리페인트 경계 설정
                   itemCount: _imageCount,
                   itemBuilder: (context, index) {
                     final imageName = _imageNames['${index + 1}.webp'] ?? 'Work ${index + 1}';
@@ -672,7 +672,7 @@ class _SectionWorkState extends State<SectionWork> {
   }
 }
 
-/* ---------------- WORK IMAGE ITEM (호버 효과) ---------------- */
+/* ---------------- WORK IMAGE ITEM (메모리 최적화) ---------------- */
 
 class WorkImageItem extends StatefulWidget {
   final int index;
@@ -692,11 +692,16 @@ class WorkImageItem extends StatefulWidget {
   State<WorkImageItem> createState() => _WorkImageItemState();
 }
 
-class _WorkImageItemState extends State<WorkImageItem> {
+class _WorkImageItemState extends State<WorkImageItem> with AutomaticKeepAliveClientMixin {
   bool _isHovered = false;
 
   @override
+  bool get wantKeepAlive => false; // 화면 밖으로 나가면 메모리 해제
+
+  @override
   Widget build(BuildContext context) {
+    super.build(context); // AutomaticKeepAliveClientMixin 필수
+    
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
       onExit: (_) => setState(() => _isHovered = false),
@@ -706,8 +711,8 @@ class _WorkImageItemState extends State<WorkImageItem> {
           borderRadius: BorderRadius.circular(0),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // 실제 표시 크기의 2배만 캐싱 (레티나 대응)
-              final cacheSize = (constraints.maxWidth * 2).toInt();
+              // 썸네일 크기만 캐싱 (1.2배로 축소)
+              final cacheSize = (constraints.maxWidth * 1.2).toInt();
               
               return Stack(
                 children: [
@@ -715,14 +720,12 @@ class _WorkImageItemState extends State<WorkImageItem> {
                   Image.asset(
                     widget.imagePath,
                     fit: BoxFit.cover,
-                    cacheWidth: cacheSize > 0 ? cacheSize : null,  // ← 동적 캐싱
+                    cacheWidth: cacheSize > 0 ? cacheSize : null,
+                    gaplessPlayback: true, // 부드러운 전환
                   ),
                   // 검정 오버레이 + 이름
-                  Positioned.fill(
-                    child: AnimatedOpacity(
-                      duration: const Duration(milliseconds: 100),
-                      opacity: _isHovered ? 1.0 : 0.0,
-                      curve: Curves.easeInOut,
+                  if (_isHovered)
+                    Positioned.fill(
                       child: Container(
                         color: Colors.black.withOpacity(0.3),
                         child: Center(
@@ -738,7 +741,6 @@ class _WorkImageItemState extends State<WorkImageItem> {
                         ),
                       ),
                     ),
-                  ),
                 ],
               );
             },
@@ -783,22 +785,21 @@ class SectionAbout extends StatelessWidget {
                     ? Row(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          // 왼쪽: 이미지 (60%)
                           Expanded(
                             flex: 60,
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(14),
                               child: AspectRatio(
-                                aspectRatio: 2048 / 1389, // 원본 비율 유지
+                                aspectRatio: 2048 / 1389,
                                 child: Image.asset(
                                   'assets/res/about.jpg',
                                   fit: BoxFit.cover,
+                                  cacheWidth: 800, // 고정 크기 캐싱
                                 ),
                               ),
                             ),
                           ),
                           const SizedBox(width: 40),
-                          // 오른쪽: 텍스트 (40%)
                           Expanded(
                             flex: 40,
                             child: _buildTextContent(context),
@@ -807,19 +808,18 @@ class SectionAbout extends StatelessWidget {
                       )
                     : Column(
                         children: [
-                          // 이미지
                           ClipRRect(
                             borderRadius: BorderRadius.circular(14),
                             child: AspectRatio(
-                              aspectRatio: 2048 / 1389, // 원본 비율 유지
+                              aspectRatio: 2048 / 1389,
                               child: Image.asset(
                                 'assets/res/about.jpg',
                                 fit: BoxFit.cover,
+                                cacheWidth: 800,
                               ),
                             ),
                           ),
                           const SizedBox(height: 40),
-                          // 텍스트
                           _buildTextContent(context),
                         ],
                       ),
@@ -835,7 +835,6 @@ class SectionAbout extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // 이름
         const Text(
           '돈돈 / DonDon',
           style: TextStyle(
@@ -846,14 +845,13 @@ class SectionAbout extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         
-        // 트위터 링크
         InkWell(
           onTap: () => _launchUrl('https://x.com/DonDon_Fur'),
           child: const Text(
             '@DonDon_Fur',
             style: TextStyle(
               fontSize: 16,
-              color: Color(0xFF1DA1F2), // 트위터 블루
+              color: Color(0xFF1DA1F2),
               decoration: TextDecoration.underline,
             ),
           ),
@@ -861,14 +859,12 @@ class SectionAbout extends StatelessWidget {
         
         const SizedBox(height: 24),
         
-        // 구분선
         Container(
           height: 1,
           color: Colors.grey.withOpacity(0.3),
         ),
         const SizedBox(height: 24),
         
-        // Profile
         Text(
           'Profile',
           style: TextStyle(
@@ -889,7 +885,6 @@ class SectionAbout extends StatelessWidget {
         
         const SizedBox(height: 24),
         
-        // Gear
         Text(
           'Gear',
           style: TextStyle(
@@ -962,7 +957,6 @@ class SectionContact extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         
-        // 소셜 아이콘
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -1037,7 +1031,7 @@ class _SocialIconButtonState extends State<_SocialIconButton> {
   }
 }
 
-/* ---------------- IMAGE VIEWER OVERLAY ---------------- */
+/* ---------------- IMAGE VIEWER OVERLAY (메모리 최적화) ---------------- */
 
 class ImageViewerOverlay extends StatefulWidget {
   final int currentIndex;
@@ -1063,49 +1057,37 @@ class ImageViewerOverlay extends StatefulWidget {
 
 class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     with SingleTickerProviderStateMixin {
-  late AnimationController _slideController;
-  late Animation<Offset> _slideOutAnimation;
-  late Animation<Offset> _slideInAnimation;
-  int _displayIndex = 0;
-  bool _isSliding = false;
-  bool _slideRight = true;
+  late AnimationController _fadeController;
+  late Animation<double> _fadeAnimation;
+  String? _currentImagePath;
+  String? _nextImagePath;
 
-Future<void> _launchImageUrl(String imagePath) async {
-  if (kIsWeb) {
-    // assets/ 그대로 유지 (assets/assets/로 만들기 위해)
-    final imageUrl = 'assets/$imagePath';
-    
-    print('Opening URL: $imageUrl');
-    html.window.open(imageUrl, '_blank');
-  } else {
-    print('Image opening is only supported on web');
+  Future<void> _launchImageUrl(String imagePath) async {
+    if (kIsWeb) {
+      final imageUrl = 'assets/$imagePath';
+      print('Opening URL: $imageUrl');
+      html.window.open(imageUrl, '_blank');
+    } else {
+      print('Image opening is only supported on web');
+    }
   }
-}
 
   @override
   void initState() {
     super.initState();
-    _displayIndex = widget.currentIndex;
+    _currentImagePath = _getImagePath(widget.currentIndex);
     
-    _slideController = AnimationController(
-      duration: const Duration(milliseconds: 700),
+    _fadeController = AnimationController(
+      duration: const Duration(milliseconds: 300),
       vsync: this,
     );
     
-    _slideOutAnimation = Tween<Offset>(
-      begin: Offset.zero,
-      end: const Offset(-1, 0),
+    _fadeAnimation = Tween<double>(
+      begin: 1.0,
+      end: 0.0,
     ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: const Interval(0.0, 0.6, curve: Curves.easeInCubic),
-    ));
-    
-    _slideInAnimation = Tween<Offset>(
-      begin: const Offset(1, 0),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _slideController,
-      curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
+      parent: _fadeController,
+      curve: Curves.easeInOut,
     ));
   }
 
@@ -1113,66 +1095,19 @@ Future<void> _launchImageUrl(String imagePath) async {
   void didUpdateWidget(ImageViewerOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      _slideRight = widget.currentIndex < oldWidget.currentIndex ||
-          (widget.currentIndex == 0 && oldWidget.currentIndex > 1);
-      _updateAnimationDirection();
-      _slideImage();
-    }
-  }
-
-  void _updateAnimationDirection() {
-    if (_slideRight) {
-      _slideOutAnimation = Tween<Offset>(
-        begin: Offset.zero,
-        end: const Offset(1, 0),
-      ).animate(CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeInCubic),
-      ));
-      
-      _slideInAnimation = Tween<Offset>(
-        begin: const Offset(-1, 0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-      ));
-    } else {
-      _slideOutAnimation = Tween<Offset>(
-        begin: Offset.zero,
-        end: const Offset(-1, 0),
-      ).animate(CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeInCubic),
-      ));
-      
-      _slideInAnimation = Tween<Offset>(
-        begin: const Offset(1, 0),
-        end: Offset.zero,
-      ).animate(CurvedAnimation(
-        parent: _slideController,
-        curve: const Interval(0.3, 1.0, curve: Curves.easeOutCubic),
-      ));
-    }
-  }
-
-  void _slideImage() {
-    if (_isSliding) return;
-    
-    setState(() => _isSliding = true);
-    
-    _slideController.forward().then((_) {
-      setState(() {
-        _displayIndex = widget.currentIndex;
+      _nextImagePath = _getImagePath(widget.currentIndex);
+      _fadeController.forward().then((_) {
+        setState(() {
+          _currentImagePath = _nextImagePath;
+        });
+        _fadeController.reverse();
       });
-      _slideController.reset();
-      setState(() => _isSliding = false);
-    });
+    }
   }
 
   @override
   void dispose() {
-    _slideController.dispose();
+    _fadeController.dispose();
     super.dispose();
   }
 
@@ -1185,59 +1120,42 @@ Future<void> _launchImageUrl(String imagePath) async {
   }
 
   @override
-Widget build(BuildContext context) {
-  return Material(
-    color: Colors.transparent,
-    child: GestureDetector(
-      onTap: widget.onClose,
-      child: Container(
-        color: Colors.black.withOpacity(0.9),
-        child: Stack(
-          children: [
-            // 이미지 영역
-            Center(
-              child: GestureDetector(
-                onTap: () {
-                  final imagePath = _getImagePath(widget.currentIndex);
-                  _launchImageUrl(imagePath);
-                },
-                child: Container(
-                  constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width * 0.85,
-                    maxHeight: MediaQuery.of(context).size.height * 0.85,
-                  ),
-                  child: AnimatedBuilder(
-                    animation: _slideController,
-                    builder: (context, child) {
-                      // 뷰어는 화면 크기 기준으로 캐싱
-                      final screenWidth = MediaQuery.of(context).size.width;
-                      final cacheSize = (screenWidth * 2).toInt();  // 레티나 대응
-                      
-                      if (_slideController.value < 0.5) {
-                        return SlideTransition(
-                          position: _slideOutAnimation,
-                          child: Image.asset(
-                            _getImagePath(_displayIndex),
-                            fit: BoxFit.contain,
-                            cacheWidth: cacheSize,  // ← 화면 크기 기준
-                          ),
-                        );
-                      } else {
-                        return SlideTransition(
-                          position: _slideInAnimation,
-                          child: Image.asset(
-                            _getImagePath(widget.currentIndex),
-                            fit: BoxFit.contain,
-                            cacheWidth: cacheSize,  // ← 화면 크기 기준
-                          ),
-                        );
-                      }
-                    },
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: GestureDetector(
+        onTap: widget.onClose,
+        child: Container(
+          color: Colors.black.withOpacity(0.9),
+          child: Stack(
+            children: [
+              // 이미지 영역
+              Center(
+                child: GestureDetector(
+                  onTap: () {
+                    if (_currentImagePath != null) {
+                      _launchImageUrl(_currentImagePath!);
+                    }
+                  },
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width * 0.85,
+                      maxHeight: MediaQuery.of(context).size.height * 0.85,
+                    ),
+                    child: FadeTransition(
+                      opacity: _fadeAnimation,
+                      child: _currentImagePath != null
+                          ? Image.asset(
+                              _currentImagePath!,
+                              fit: BoxFit.contain,
+                              cacheWidth: 1920, // 고정 크기로 캐싱
+                              gaplessPlayback: true,
+                            )
+                          : const SizedBox(),
+                    ),
                   ),
                 ),
               ),
-            ),
-            // ... 나머지 코드
               
               // 왼쪽 화살표
               Positioned(

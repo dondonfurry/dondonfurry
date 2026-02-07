@@ -1197,9 +1197,14 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     _slideController.forward(from: 0).then((_) {
       setState(() {
         _displayIndex = widget.currentIndex;
-        _isSliding = false;
       });
       _slideController.reset();
+      // 애니메이션 완료 후 약간의 딜레이를 주고 활성화
+      Future.delayed(const Duration(milliseconds: 50), () {
+        if (mounted) {
+          setState(() => _isSliding = false);
+        }
+      });
     });
   }
 
@@ -1241,6 +1246,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                     ),
                     child: ClipRect(
                       child: Stack(
+                        alignment: Alignment.center, // 중앙 정렬 추가
                         children: [
                           // 정지 상태 이미지
                           if (!_isSliding)
@@ -1288,7 +1294,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                   child: _ArrowButton(
                     icon: Icons.arrow_back_ios_new,
                     onTap: widget.onPrevious,
-                    isEnabled: widget.currentIndex > 0,
+                    isEnabled: !_isSliding && widget.currentIndex > 0,
                   ),
                 ),
               ),
@@ -1302,7 +1308,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                   child: _ArrowButton(
                     icon: Icons.arrow_forward_ios,
                     onTap: widget.onNext,
-                    isEnabled: widget.currentIndex < widget.totalCount - 1,
+                    isEnabled: !_isSliding && widget.currentIndex < widget.totalCount - 1,
                   ),
                 ),
               ),

@@ -1222,33 +1222,46 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
           color: Colors.black.withOpacity(0.9),
           child: Stack(
             children: [
-              // 이미지 영역
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    final imagePath = _getImagePath(_displayIndex);
-                    _launchImageUrl(imagePath);
-                  },
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.85,
-                      maxHeight: MediaQuery.of(context).size.height * 0.85,
-                    ),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // 정지 상태 이미지
-                        if (!_isSliding)
-                          Image.asset(
+              // 이미지 영역 - ClipRect 제거하고 Stack으로 오버플로우 허용
+              Positioned.fill(
+                child: Stack(
+                  clipBehavior: Clip.none, // 클리핑 비활성화
+                  alignment: Alignment.center,
+                  children: [
+                    // 정지 상태 이미지
+                    if (!_isSliding)
+                      GestureDetector(
+                        onTap: () {
+                          final imagePath = _getImagePath(_displayIndex);
+                          _launchImageUrl(imagePath);
+                        },
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            maxWidth: MediaQuery.of(context).size.width * 0.85,
+                            maxHeight: MediaQuery.of(context).size.height * 0.85,
+                          ),
+                          child: Image.asset(
                             _getImagePath(_displayIndex),
                             fit: BoxFit.contain,
                             cacheWidth: 1920,
                             gaplessPlayback: true,
                           ),
-                        // 나가는 이미지 (애니메이션 중)
-                        if (_isSliding)
-                          SlideTransition(
-                            position: _slideOutAnimation,
+                        ),
+                      ),
+                    // 나가는 이미지 (애니메이션 중)
+                    if (_isSliding)
+                      SlideTransition(
+                        position: _slideOutAnimation,
+                        child: GestureDetector(
+                          onTap: () {
+                            final imagePath = _getImagePath(_displayIndex);
+                            _launchImageUrl(imagePath);
+                          },
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.85,
+                              maxHeight: MediaQuery.of(context).size.height * 0.85,
+                            ),
                             child: Image.asset(
                               _getImagePath(_displayIndex),
                               fit: BoxFit.contain,
@@ -1256,10 +1269,22 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                               gaplessPlayback: true,
                             ),
                           ),
-                        // 들어오는 이미지 (애니메이션 중)
-                        if (_isSliding)
-                          SlideTransition(
-                            position: _slideInAnimation,
+                        ),
+                      ),
+                    // 들어오는 이미지 (애니메이션 중)
+                    if (_isSliding)
+                      SlideTransition(
+                        position: _slideInAnimation,
+                        child: GestureDetector(
+                          onTap: () {
+                            final imagePath = _getImagePath(widget.currentIndex);
+                            _launchImageUrl(imagePath);
+                          },
+                          child: ConstrainedBox(
+                            constraints: BoxConstraints(
+                              maxWidth: MediaQuery.of(context).size.width * 0.85,
+                              maxHeight: MediaQuery.of(context).size.height * 0.85,
+                            ),
                             child: Image.asset(
                               _getImagePath(widget.currentIndex),
                               fit: BoxFit.contain,
@@ -1267,9 +1292,9 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                               gaplessPlayback: true,
                             ),
                           ),
-                      ],
-                    ),
-                  ),
+                        ),
+                      ),
+                  ],
                 ),
               ),
               

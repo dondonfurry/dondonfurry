@@ -1107,6 +1107,11 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
       parent: _slideController,
       curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
     ));
+    
+    // 초기 이미지들 프리로드
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _preloadAdjacentImages();
+    });
   }
 
   @override
@@ -1118,6 +1123,31 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
           (widget.currentIndex == 0 && oldWidget.currentIndex == widget.totalCount - 1);
       _updateAnimationDirection();
       _slideImage();
+      
+      // 새로운 인접 이미지 프리로드
+      _preloadAdjacentImages();
+    }
+  }
+
+  // 이전/다음 이미지 프리로딩
+  void _preloadAdjacentImages() {
+    final prevIndex = (_displayIndex - 1 + widget.totalCount) % widget.totalCount;
+    final nextIndex = (_displayIndex + 1) % widget.totalCount;
+    
+    // 이전 이미지 프리로드
+    if (prevIndex != _displayIndex) {
+      precacheImage(
+        AssetImage(_getImagePath(prevIndex)),
+        context,
+      );
+    }
+    
+    // 다음 이미지 프리로드
+    if (nextIndex != _displayIndex) {
+      precacheImage(
+        AssetImage(_getImagePath(nextIndex)),
+        context,
+      );
     }
   }
 

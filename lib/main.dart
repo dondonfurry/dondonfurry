@@ -654,7 +654,7 @@ class _SectionWorkState extends State<SectionWork> {
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   addAutomaticKeepAlives: false,
-                  addRepaintBoundaries: true, // 추가: 리페인트 경계 설정
+                  addRepaintBoundaries: true,
                   itemCount: _imageCount,
                   itemBuilder: (context, index) {
                     final imageName = _imageNames['${index + 1}.webp'] ?? 'Work ${index + 1}';
@@ -700,11 +700,11 @@ class _WorkImageItemState extends State<WorkImageItem> with AutomaticKeepAliveCl
   bool _isHovered = false;
 
   @override
-  bool get wantKeepAlive => false; // 화면 밖으로 나가면 메모리 해제
+  bool get wantKeepAlive => false;
 
   @override
   Widget build(BuildContext context) {
-    super.build(context); // AutomaticKeepAliveClientMixin 필수
+    super.build(context);
     
     return MouseRegion(
       onEnter: (_) => setState(() => _isHovered = true),
@@ -715,7 +715,6 @@ class _WorkImageItemState extends State<WorkImageItem> with AutomaticKeepAliveCl
           borderRadius: BorderRadius.circular(0),
           child: LayoutBuilder(
             builder: (context, constraints) {
-              // 썸네일 크기만 캐싱 (1.2배로 축소)
               final cacheSize = (constraints.maxWidth * 1.2).toInt();
               
               return Stack(
@@ -725,7 +724,7 @@ class _WorkImageItemState extends State<WorkImageItem> with AutomaticKeepAliveCl
                     widget.imagePath,
                     fit: BoxFit.cover,
                     cacheWidth: cacheSize > 0 ? cacheSize : null,
-                    gaplessPlayback: true, // 부드러운 전환
+                    gaplessPlayback: true,
                   ),
                   // 검정 오버레이 + 이름
                   Positioned.fill(
@@ -802,7 +801,7 @@ class SectionAbout extends StatelessWidget {
                                 child: Image.asset(
                                   'assets/res/about.jpg',
                                   fit: BoxFit.cover,
-                                  cacheWidth: 800, // 고정 크기 캐싱
+                                  cacheWidth: 800,
                                 ),
                               ),
                             ),
@@ -1094,21 +1093,20 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     
     _slideOutAnimation = Tween<Offset>(
       begin: Offset.zero,
-      end: const Offset(-1.2, 0),
+      end: const Offset(-2.0, 0),
     ).animate(CurvedAnimation(
       parent: _slideController,
       curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
     ));
     
     _slideInAnimation = Tween<Offset>(
-      begin: const Offset(1.2, 0),
+      begin: const Offset(2.0, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+      curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
     ));
     
-    // 초기 이미지들 프리로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _preloadAdjacentImages();
     });
@@ -1118,23 +1116,19 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   void didUpdateWidget(ImageViewerOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      // 방향 결정 - 오른쪽 화살표를 누르면 왼쪽으로 슬라이드
       _slideRight = widget.currentIndex > oldWidget.currentIndex ||
           (widget.currentIndex == 0 && oldWidget.currentIndex == widget.totalCount - 1);
       _updateAnimationDirection();
       _slideImage();
       
-      // 새로운 인접 이미지 프리로드
       _preloadAdjacentImages();
     }
   }
 
-  // 이전/다음 이미지 프리로딩
   void _preloadAdjacentImages() {
     final prevIndex = (_displayIndex - 1 + widget.totalCount) % widget.totalCount;
     final nextIndex = (_displayIndex + 1) % widget.totalCount;
     
-    // 이전 이미지 프리로드
     if (prevIndex != _displayIndex) {
       precacheImage(
         AssetImage(_getImagePath(prevIndex)),
@@ -1142,7 +1136,6 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
       );
     }
     
-    // 다음 이미지 프리로드
     if (nextIndex != _displayIndex) {
       precacheImage(
         AssetImage(_getImagePath(nextIndex)),
@@ -1153,38 +1146,36 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
 
   void _updateAnimationDirection() {
     if (_slideRight) {
-      // 오른쪽 화살표 클릭: 현재 사진이 왼쪽으로, 새 사진이 오른쪽에서
       _slideOutAnimation = Tween<Offset>(
         begin: Offset.zero,
-        end: const Offset(-1.2, 0),
+        end: const Offset(-2.0, 0),
       ).animate(CurvedAnimation(
         parent: _slideController,
         curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
       ));
       
       _slideInAnimation = Tween<Offset>(
-        begin: const Offset(1.2, 0),
+        begin: const Offset(2.0, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+        curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
       ));
     } else {
-      // 왼쪽 화살표 클릭: 현재 사진이 오른쪽으로, 새 사진이 왼쪽에서
       _slideOutAnimation = Tween<Offset>(
         begin: Offset.zero,
-        end: const Offset(1.2, 0),
+        end: const Offset(2.0, 0),
       ).animate(CurvedAnimation(
         parent: _slideController,
         curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
       ));
       
       _slideInAnimation = Tween<Offset>(
-        begin: const Offset(-1.2, 0),
+        begin: const Offset(-2.0, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
+        curve: const Interval(0.5, 1.0, curve: Curves.easeOutCubic),
       ));
     }
   }
@@ -1199,7 +1190,6 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
         _displayIndex = widget.currentIndex;
       });
       _slideController.reset();
-      // 애니메이션 완료 후 약간의 딜레이를 주고 활성화
       Future.delayed(const Duration(milliseconds: 50), () {
         if (mounted) {
           setState(() => _isSliding = false);
@@ -1244,42 +1234,40 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                       maxWidth: MediaQuery.of(context).size.width * 0.85,
                       maxHeight: MediaQuery.of(context).size.height * 0.85,
                     ),
-                    child: ClipRect(
-                      child: Stack(
-                        alignment: Alignment.center, // 중앙 정렬 추가
-                        children: [
-                          // 정지 상태 이미지
-                          if (!_isSliding)
-                            Image.asset(
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // 정지 상태 이미지
+                        if (!_isSliding)
+                          Image.asset(
+                            _getImagePath(_displayIndex),
+                            fit: BoxFit.contain,
+                            cacheWidth: 1920,
+                            gaplessPlayback: true,
+                          ),
+                        // 나가는 이미지 (애니메이션 중)
+                        if (_isSliding)
+                          SlideTransition(
+                            position: _slideOutAnimation,
+                            child: Image.asset(
                               _getImagePath(_displayIndex),
                               fit: BoxFit.contain,
                               cacheWidth: 1920,
                               gaplessPlayback: true,
                             ),
-                          // 나가는 이미지 (애니메이션 중)
-                          if (_isSliding)
-                            SlideTransition(
-                              position: _slideOutAnimation,
-                              child: Image.asset(
-                                _getImagePath(_displayIndex),
-                                fit: BoxFit.contain,
-                                cacheWidth: 1920,
-                                gaplessPlayback: true,
-                              ),
+                          ),
+                        // 들어오는 이미지 (애니메이션 중)
+                        if (_isSliding)
+                          SlideTransition(
+                            position: _slideInAnimation,
+                            child: Image.asset(
+                              _getImagePath(widget.currentIndex),
+                              fit: BoxFit.contain,
+                              cacheWidth: 1920,
+                              gaplessPlayback: true,
                             ),
-                          // 들어오는 이미지 (애니메이션 중)
-                          if (_isSliding)
-                            SlideTransition(
-                              position: _slideInAnimation,
-                              child: Image.asset(
-                                _getImagePath(widget.currentIndex),
-                                fit: BoxFit.contain,
-                                cacheWidth: 1920,
-                                gaplessPlayback: true,
-                              ),
-                            ),
-                        ],
-                      ),
+                          ),
+                      ],
                     ),
                   ),
                 ),

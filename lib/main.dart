@@ -1088,24 +1088,24 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     _displayIndex = widget.currentIndex;
     
     _slideController = AnimationController(
-      duration: const Duration(milliseconds: 400),
+      duration: const Duration(milliseconds: 600),
       vsync: this,
     );
     
     _slideOutAnimation = Tween<Offset>(
       begin: Offset.zero,
-      end: const Offset(-1, 0),
+      end: const Offset(-1.2, 0),
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: Curves.easeInOut,
+      curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
     ));
     
     _slideInAnimation = Tween<Offset>(
-      begin: const Offset(1, 0),
+      begin: const Offset(1.2, 0),
       end: Offset.zero,
     ).animate(CurvedAnimation(
       parent: _slideController,
-      curve: Curves.easeInOut,
+      curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
     ));
   }
 
@@ -1113,8 +1113,8 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   void didUpdateWidget(ImageViewerOverlay oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.currentIndex != widget.currentIndex) {
-      // 방향 결정
-      _slideRight = widget.currentIndex < oldWidget.currentIndex ||
+      // 방향 결정 - 오른쪽 화살표를 누르면 왼쪽으로 슬라이드
+      _slideRight = widget.currentIndex > oldWidget.currentIndex ||
           (widget.currentIndex == 0 && oldWidget.currentIndex == widget.totalCount - 1);
       _updateAnimationDirection();
       _slideImage();
@@ -1123,38 +1123,38 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
 
   void _updateAnimationDirection() {
     if (_slideRight) {
-      // 오른쪽으로 슬라이드 (이전 이미지)
+      // 오른쪽 화살표 클릭: 현재 사진이 왼쪽으로, 새 사진이 오른쪽에서
       _slideOutAnimation = Tween<Offset>(
         begin: Offset.zero,
-        end: const Offset(1, 0),
+        end: const Offset(-1.2, 0),
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: Curves.easeInOut,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
       ));
       
       _slideInAnimation = Tween<Offset>(
-        begin: const Offset(-1, 0),
+        begin: const Offset(1.2, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: Curves.easeInOut,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
       ));
     } else {
-      // 왼쪽으로 슬라이드 (다음 이미지)
+      // 왼쪽 화살표 클릭: 현재 사진이 오른쪽으로, 새 사진이 왼쪽에서
       _slideOutAnimation = Tween<Offset>(
         begin: Offset.zero,
-        end: const Offset(-1, 0),
+        end: const Offset(1.2, 0),
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: Curves.easeInOut,
+        curve: const Interval(0.0, 0.5, curve: Curves.easeInCubic),
       ));
       
       _slideInAnimation = Tween<Offset>(
-        begin: const Offset(1, 0),
+        begin: const Offset(-1.2, 0),
         end: Offset.zero,
       ).animate(CurvedAnimation(
         parent: _slideController,
-        curve: Curves.easeInOut,
+        curve: const Interval(0.4, 1.0, curve: Curves.easeOutCubic),
       ));
     }
   }
@@ -1167,9 +1167,9 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
     _slideController.forward(from: 0).then((_) {
       setState(() {
         _displayIndex = widget.currentIndex;
+        _isSliding = false;
       });
       _slideController.reset();
-      setState(() => _isSliding = false);
     });
   }
 
@@ -1201,7 +1201,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
               Center(
                 child: GestureDetector(
                   onTap: () {
-                    final imagePath = _getImagePath(widget.currentIndex);
+                    final imagePath = _getImagePath(_displayIndex);
                     _launchImageUrl(imagePath);
                   },
                   child: Container(
@@ -1209,39 +1209,41 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                       maxWidth: MediaQuery.of(context).size.width * 0.85,
                       maxHeight: MediaQuery.of(context).size.height * 0.85,
                     ),
-                    child: Stack(
-                      children: [
-                        // 나가는 이미지
-                        if (_isSliding)
-                          SlideTransition(
-                            position: _slideOutAnimation,
-                            child: Image.asset(
+                    child: ClipRect(
+                      child: Stack(
+                        children: [
+                          // 정지 상태 이미지
+                          if (!_isSliding)
+                            Image.asset(
                               _getImagePath(_displayIndex),
                               fit: BoxFit.contain,
                               cacheWidth: 1920,
                               gaplessPlayback: true,
                             ),
-                          ),
-                        // 들어오는 이미지
-                        if (_isSliding)
-                          SlideTransition(
-                            position: _slideInAnimation,
-                            child: Image.asset(
-                              _getImagePath(widget.currentIndex),
-                              fit: BoxFit.contain,
-                              cacheWidth: 1920,
-                              gaplessPlayback: true,
+                          // 나가는 이미지 (애니메이션 중)
+                          if (_isSliding)
+                            SlideTransition(
+                              position: _slideOutAnimation,
+                              child: Image.asset(
+                                _getImagePath(_displayIndex),
+                                fit: BoxFit.contain,
+                                cacheWidth: 1920,
+                                gaplessPlayback: true,
+                              ),
                             ),
-                          ),
-                        // 정지 상태 이미지
-                        if (!_isSliding)
-                          Image.asset(
-                            _getImagePath(_displayIndex),
-                            fit: BoxFit.contain,
-                            cacheWidth: 1920,
-                            gaplessPlayback: true,
-                          ),
-                      ],
+                          // 들어오는 이미지 (애니메이션 중)
+                          if (_isSliding)
+                            SlideTransition(
+                              position: _slideInAnimation,
+                              child: Image.asset(
+                                _getImagePath(widget.currentIndex),
+                                fit: BoxFit.contain,
+                                cacheWidth: 1920,
+                                gaplessPlayback: true,
+                              ),
+                            ),
+                        ],
+                      ),
                     ),
                   ),
                 ),

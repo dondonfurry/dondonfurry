@@ -342,16 +342,16 @@ class Header extends StatelessWidget {
     required this.onContact,
   });
 
-  Widget _menu(String text, VoidCallback onTap) {
+  Widget _menu(String text, VoidCallback onTap, bool isMobile) {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 14),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 8 : 14),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Color(0xFF333333),
+          style: TextStyle(
+            fontSize: isMobile ? 12 : 14,
+            color: const Color(0xFF333333),
           ),
         ),
       ),
@@ -368,6 +368,8 @@ class Header extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isMobile = MediaQuery.of(context).size.width < 600;
+    
     return Container(
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.95),
@@ -380,21 +382,24 @@ class Header extends StatelessWidget {
         ],
       ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+        padding: EdgeInsets.symmetric(horizontal: isMobile ? 12 : 24),
         child: Row(
           children: [
-            const Text(
+            Text(
               'DonDon\'s Portfolio',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: isMobile ? 16 : 20,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const Spacer(),
-            _menu('Main', onMain),
-            _divider(),
-            _menu('Work', onWork),
-            _divider(),
-            _menu('About', onAbout),
-            _divider(),
-            _menu('Contact', onContact),
+            _menu('Main', onMain, isMobile),
+            if (!isMobile) _divider(),
+            _menu('Work', onWork, isMobile),
+            if (!isMobile) _divider(),
+            _menu('About', onAbout, isMobile),
+            if (!isMobile) _divider(),
+            _menu('Contact', onContact, isMobile),
           ],
         ),
       ),
@@ -1348,11 +1353,11 @@ class _ArrowButtonState extends State<_ArrowButton> {
     final horizontalPadding = widget.isMobile ? 12.0 : 30.0;
     final verticalPadding = widget.isMobile ? 20.0 : 40.0;
     
-    return MouseRegion(
-      onEnter: widget.isEnabled ? (_) => setState(() => _isHovered = true) : null,
-      onExit: widget.isEnabled ? (_) => setState(() => _isHovered = false) : null,
-      child: GestureDetector(
-        onTap: widget.isEnabled ? widget.onTap : () {},
+    return GestureDetector(
+      onTap: widget.isEnabled ? widget.onTap : () {},
+      child: MouseRegion(
+        onEnter: widget.isEnabled ? (_) => setState(() => _isHovered = true) : null,
+        onExit: widget.isEnabled ? (_) => setState(() => _isHovered = false) : null,
         child: Container(
           // 클릭 영역 확대
           padding: EdgeInsets.symmetric(

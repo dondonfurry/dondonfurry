@@ -1332,7 +1332,8 @@ class _ArrowButtonState extends State<_ArrowButton> {
       child: GestureDetector(
         onTap: widget.isEnabled ? widget.onTap : () {},
         child: Container(
-          padding: const EdgeInsets.all(20),
+          // 클릭 영역 확대: 좌우 1.5배 (60px), 상하 2배 (80px)
+          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
           child: Icon(
             widget.icon,
             color: widget.isEnabled

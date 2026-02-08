@@ -1185,6 +1185,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
       color: Colors.transparent,
       child: GestureDetector(
         onTap: widget.onClose,
+        behavior: HitTestBehavior.translucent, // 자식 위젯이 없는 영역만 반응
         child: Container(
           color: Colors.black.withOpacity(0.9),
           child: Stack(
@@ -1353,11 +1354,12 @@ class _ArrowButtonState extends State<_ArrowButton> {
     final horizontalPadding = widget.isMobile ? 12.0 : 30.0;
     final verticalPadding = widget.isMobile ? 20.0 : 40.0;
     
-    return GestureDetector(
-      onTap: widget.isEnabled ? widget.onTap : () {},
-      child: MouseRegion(
-        onEnter: widget.isEnabled ? (_) => setState(() => _isHovered = true) : null,
-        onExit: widget.isEnabled ? (_) => setState(() => _isHovered = false) : null,
+    return MouseRegion(
+      onEnter: widget.isEnabled ? (_) => setState(() => _isHovered = true) : null,
+      onExit: widget.isEnabled ? (_) => setState(() => _isHovered = false) : null,
+      child: GestureDetector(
+        onTap: widget.isEnabled ? widget.onTap : null,
+        behavior: HitTestBehavior.opaque, // 투명한 영역도 클릭 가능하게
         child: Container(
           // 클릭 영역 확대
           padding: EdgeInsets.symmetric(

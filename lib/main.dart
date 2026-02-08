@@ -1165,6 +1165,16 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
+    final isMobile = screenWidth < 600;
+    
+    // 모바일/데스크탑에 따른 여백 조정
+    final horizontalPadding = isMobile ? 20.0 : 100.0;
+    final imageMaxWidth = isMobile ? 0.95 : 0.85;
+    final imageMaxHeight = isMobile ? 0.85 : 0.85;
+    final arrowSize = isMobile ? 32.0 : 40.0;
+    final closeButtonSize = isMobile ? 28.0 : 32.0;
+    final closeButtonTop = isMobile ? 16.0 : 40.0;
+    final closeButtonRight = isMobile ? 16.0 : 40.0;
     
     return Material(
       color: Colors.transparent,
@@ -1176,8 +1186,8 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
             children: [
               // 이미지 영역 - 화살표 근처에서 자연스럽게 클리핑
               Positioned.fill(
-                left: 100,
-                right: 100,
+                left: horizontalPadding,
+                right: horizontalPadding,
                 child: ClipRect(
                   child: AnimatedBuilder(
                     animation: _slideAnimation,
@@ -1212,8 +1222,8 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                                 },
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.85,
-                                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                                    maxWidth: MediaQuery.of(context).size.width * imageMaxWidth,
+                                    maxHeight: MediaQuery.of(context).size.height * imageMaxHeight,
                                   ),
                                   child: Image.asset(
                                     _getImagePath(_displayIndex),
@@ -1235,8 +1245,8 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                                 },
                                 child: ConstrainedBox(
                                   constraints: BoxConstraints(
-                                    maxWidth: MediaQuery.of(context).size.width * 0.85,
-                                    maxHeight: MediaQuery.of(context).size.height * 0.85,
+                                    maxWidth: MediaQuery.of(context).size.width * imageMaxWidth,
+                                    maxHeight: MediaQuery.of(context).size.height * imageMaxHeight,
                                   ),
                                   child: Image.asset(
                                     _getImagePath(widget.currentIndex),
@@ -1256,7 +1266,7 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
               
               // 왼쪽 화살표
               Positioned(
-                left: 40,
+                left: 0,
                 top: 0,
                 bottom: 0,
                 child: Center(
@@ -1264,13 +1274,15 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                     icon: Icons.arrow_back_ios_new,
                     onTap: widget.onPrevious,
                     isEnabled: !_isSliding && widget.currentIndex > 0,
+                    size: arrowSize,
+                    isMobile: isMobile,
                   ),
                 ),
               ),
               
               // 오른쪽 화살표
               Positioned(
-                right: 40,
+                right: 0,
                 top: 0,
                 bottom: 0,
                 child: Center(
@@ -1278,22 +1290,24 @@ class _ImageViewerOverlayState extends State<ImageViewerOverlay>
                     icon: Icons.arrow_forward_ios,
                     onTap: widget.onNext,
                     isEnabled: !_isSliding && widget.currentIndex < widget.totalCount - 1,
+                    size: arrowSize,
+                    isMobile: isMobile,
                   ),
                 ),
               ),
               
               // 닫기 버튼
               Positioned(
-                top: 40,
-                right: 40,
+                top: closeButtonTop,
+                right: closeButtonRight,
                 child: GestureDetector(
                   onTap: widget.onClose,
                   child: Container(
-                    padding: const EdgeInsets.all(16),
-                    child: const Icon(
+                    padding: EdgeInsets.all(isMobile ? 12 : 16),
+                    child: Icon(
                       Icons.close,
                       color: Colors.white,
-                      size: 32,
+                      size: closeButtonSize,
                     ),
                   ),
                 ),
@@ -1310,11 +1324,15 @@ class _ArrowButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onTap;
   final bool isEnabled;
+  final double size;
+  final bool isMobile;
 
   const _ArrowButton({
     required this.icon,
     required this.onTap,
     required this.isEnabled,
+    required this.size,
+    required this.isMobile,
   });
 
   @override
@@ -1326,20 +1344,27 @@ class _ArrowButtonState extends State<_ArrowButton> {
 
   @override
   Widget build(BuildContext context) {
+    // 모바일에서는 패딩을 줄임
+    final horizontalPadding = widget.isMobile ? 12.0 : 30.0;
+    final verticalPadding = widget.isMobile ? 20.0 : 40.0;
+    
     return MouseRegion(
       onEnter: widget.isEnabled ? (_) => setState(() => _isHovered = true) : null,
       onExit: widget.isEnabled ? (_) => setState(() => _isHovered = false) : null,
       child: GestureDetector(
         onTap: widget.isEnabled ? widget.onTap : () {},
         child: Container(
-          // 클릭 영역 확대: 좌우 1.5배 (60px), 상하 2배 (80px)
-          padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 40),
+          // 클릭 영역 확대
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: verticalPadding,
+          ),
           child: Icon(
             widget.icon,
             color: widget.isEnabled
                 ? (_isHovered ? Colors.white : Colors.white.withOpacity(0.7))
                 : Colors.white.withOpacity(0.2),
-            size: 40,
+            size: widget.size,
           ),
         ),
       ),
